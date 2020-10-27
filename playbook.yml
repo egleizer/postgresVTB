@@ -1,0 +1,51 @@
+---
+- name: Postgres-11 install
+  hosts: servers
+  become: yes
+
+  tasks:
+  - name: Install packages
+    yum: 
+      name={{ item }} state=installed
+      with_items:
+        - http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-server-11.7-1PGDG.rhel7.x86_64.rpm
+        - http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-11.7-1PGDG.rhel7.x86_64.rpm
+        - http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-libs-11.7-1PGDG.rhel7.x86_64.rpm
+        - http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-contrib-11.7-1PGDG.rhel7.x86_64.rpm
+      notify:
+        - Restart postgresql111-server
+        - Restart postgresql111
+        - Restart postgresql111-libs
+        - Restart postgresql111-contrib
+
+  - name: Initialize database
+    command: /usr/pgsql-11/bin/postgresql-11-setup initdb
+
+  - name: Run configurations
+    template: src=postgresql.conf.j2 dest=/etc/postgresql/9.5/main/postgresql.conf
+    register: pgconf
+
+  - name: Autostart of postgresql 
+    service:
+      name: postgresql
+      state: started
+      enabled: yes
+
+  handlers:
+  - name: Restart postgresql111-server
+    service: 
+      name: http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-server-11.7-1PGDG.rhel7.x86_64.rpm
+      state: restarted
+  - name: Restart postgresql11
+    service: 
+      name: http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-11.7-1PGDG.rhel7.x86_64.rpm
+      state: restarted
+  - name: Restart postgresql11-libs
+    service: 
+      name: http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-libs-11.7-1PGDG.rhel7.x86_64.rpm
+      state: restarted
+  - name: Restart postgresql11-contrib
+    service: 
+      name: http://nexus.cops.dev.vtb/repository/rrc2/distribs/postregsql11-contrib-11.7-1PGDG.rhel7.x86_64.rpm
+      state: restarted
+...
